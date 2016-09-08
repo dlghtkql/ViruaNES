@@ -32,11 +32,11 @@
 /*--------------[ CONST                 ]-------------------------------*/
 /*--------------[ PROTOTYPE             ]-------------------------------*/
 /*--------------[ PROGRAM               ]-------------------------------*/
-// �I�y�R�[�h
+// オペコード
 //#define	OP6502(A)	RD6502((A))
 //#define	OP6502W(A)	RD6502W((A))
 
-// �[���y�[�W���[�h
+// ゼロページリード
 #define	ZPRD(A)		(RAM[(BYTE)(A)])
 #define	ZPRDW(A)	(*((LPWORD)&RAM[(BYTE)(A)]))
 //#define	ZPRDW(A)	((WORD)RAM[(BYTE)(A)]+((WORD)RAM[(BYTE)((A)+1)]<<8))
@@ -44,25 +44,25 @@
 #define	ZPWR(A,V)	{ RAM[(BYTE)(A)]=(V); }
 #define	ZPWRW(A,V)	{ *((LPWORD)&RAM[(BYTE)(A)])=(WORD)(V); }
 
-// �T�C�N���J�E���^
+// サイクルカウンタ
 #define	ADD_CYCLE(V)	{ exec_cycles += (V); }
 //#define	ADD_CYCLE(V)	{}
 
-// EFFECTIVE ADDRESS�y�[�W���E�����`�F�b�N
+// EFFECTIVE ADDRESSページ境界超えチェック
 #define	CHECK_EA()	{ if( (ET&0xFF00) != (EA&0xFF00) ) ADD_CYCLE(1); }
 //#define	CHECK_EA()	{}
 
-// �t���O����
-// �[���^�l�K�e�B�u�t���O�̃`�F�b�N�Ɛݒ�
+// フラグ操作
+// ゼロ／ネガティブフラグのチェックと設定
 #define	SET_ZN_FLAG(A)	{ R.P &= ~(Z_FLAG|N_FLAG); R.P |= ZN_Table[(BYTE)(A)]; }
 
-// �t���O�Z�b�g
+// フラグセット
 #define	SET_FLAG(V)	{ R.P |=  (V); }
-// �t���O�N���A
+// フラグクリア
 #define	CLR_FLAG(V)	{ R.P &= ~(V); }
-// �t���O�e�X�g���Z�b�g�^�N���A
+// フラグテスト＆セット／クリア
 #define	TST_FLAG(F,V)	{ R.P &= ~(V); if((F)) R.P |= (V); }
-// �t���O�`�F�b�N
+// フラグチェック
 #define	CHK_FLAG(V)	(R.P&(V))
 
 // WT .... WORD TEMP
@@ -152,16 +152,20 @@
 	EA = ET + R.Y;		\
 }
 
-// ���������C�g
+// メモリライト
 #define	MW_ZP()		ZPWR(EA,DT)
 #define	MW_EA()		WR6502(EA,DT)
 
-// STACK����
+// STACK操作
 #define	PUSH(V)		{ STACK[R.S--]=(V); }
 #define	POP()		STACK[++R.S]
 
-// �Z�p���Z�n
+// 算術演算系
 /* ADC (NV----ZC) */
+/*
+*	레지스터끼리 값더할때 사용 Carry Bit 값을 추가시킴
+ *	Carry Bit는 SET/CLEAR 여부에 따라 결과가 달라짐
+*/
 #define	ADC() {							\
 	WT = R.A+DT+(R.P&C_FLAG);				\
 	TST_FLAG( WT > 0xFF, C_FLAG );				\
@@ -171,6 +175,10 @@
 }
 
 /* SBC (NV----ZC) */
+/*
+*	레지스터끼리의 값을 빼되, Carry Bit가 CLEAR되어 있으면
+ *	값을 추가로 1만큼 빼줌
+*/
 #define	SBC() {						\
 	WT = R.A-DT-(~R.P&C_FLAG);			\
 	TST_FLAG( ((R.A^DT) & (R.A^WT)&0x80), V_FLAG );	\
@@ -180,26 +188,43 @@
 }
 
 /* INC (N-----Z-) */
+/*
+*	다 아는 INC
+ *	대상에 1더함
+*/
 #define	INC() {			\
 	DT++;			\
 	SET_ZN_FLAG(DT);	\
 }
 /* INX (N-----Z-) */
+/*
+*	
+ *
+*/
 #define	INX() {			\
 	R.X++;			\
 	SET_ZN_FLAG(R.X);	\
 }
 /* INY (N-----Z-) */
+/*
+*
+ *
+*/
 #define	INY() {			\
 	R.Y++;			\
 	SET_ZN_FLAG(R.Y);	\
 }
 
 /* DEC (N-----Z-) */
+/*
+*	다 아는 DEC
+ *	대상에서 1을 뺌
+*/
 #define	DEC() {			\
 	DT--;			\
 	SET_ZN_FLAG(DT);	\
 }
+
 /* DEX (N-----Z-) */
 #define	DEX() {			\
 	R.X--;			\
@@ -211,26 +236,42 @@
 	SET_ZN_FLAG(R.Y);	\
 }
 
-// �_�����Z�n
+// 論理演算系
 /* AND (N-----Z-) */
+/*
+*	AND 연산
+ *
+*/
 #define	AND() {			\
 	R.A &= DT;		\
 	SET_ZN_FLAG(R.A);	\
 }
 
 /* ORA (N-----Z-) */
+/*
+*	OR 연산
+ *
+*/
 #define	ORA() {			\
 	R.A |= DT;		\
 	SET_ZN_FLAG(R.A);	\
 }
 
 /* EOR (N-----Z-) */
+/*
+*	XOR 연산
+ *
+*/
 #define	EOR() {			\
 	R.A ^= DT;		\
 	SET_ZN_FLAG(R.A);	\
 }
 
 /* ASL_A (N-----ZC) */
+/*
+*	왼쪽으로 Shift 연산 한번
+ *	[!] 추가 설명 필요
+*/
 #define	ASL_A() {			\
 	TST_FLAG( R.A&0x80, C_FLAG );	\
 	R.A <<= 1;			\
@@ -238,6 +279,10 @@
 }
 
 /* ASL (N-----ZC) */
+/*
+*	왼쪽으로 Shift 연산 한번
+ *	[!] 추가 설명 필요
+*/
 #define	ASL() {				\
 	TST_FLAG( DT&0x80, C_FLAG );	\
 	DT <<= 1;			\
@@ -310,7 +355,7 @@
 	TST_FLAG( DT&0x40, V_FLAG );		\
 }
 
-// ���[�h�^�X�g�A�n
+// ロード／ストア系
 /* LDA (N-----Z-) */
 #define	LDA()	{ R.A = DT; SET_ZN_FLAG(R.A); }
 /* LDX (N-----Z-) */
@@ -338,7 +383,7 @@
 /* TXS (--------) */
 #define	TXS()	{ R.S = R.X; }
 
-// ��r�n
+// 比較系
 /* CMP (N-----ZC) */
 #define	CMP() {					\
 	WT = R.A - DT;				\
@@ -358,7 +403,7 @@
 	SET_ZN_FLAG( (BYTE)WT );		\
 }
 
-// �W�����v�^���^�[���n
+// ジャンプ／リターン系
 #if	0
 #define	JMP_ID() {				\
 	WT = OP6502W(R.PC);			\
@@ -440,16 +485,17 @@
 }
 #endif
 
-#define	BCC()	{ if( !(R.P & C_FLAG) ) REL_JUMP(); }
-#define	BCS()	{ if(  (R.P & C_FLAG) ) REL_JUMP(); }
-#define	BNE()	{ if( !(R.P & Z_FLAG) ) REL_JUMP(); }
-#define	BEQ()	{ if(  (R.P & Z_FLAG) ) REL_JUMP(); }
-#define	BPL()	{ if( !(R.P & N_FLAG) ) REL_JUMP(); }
-#define	BMI()	{ if(  (R.P & N_FLAG) ) REL_JUMP(); }
-#define	BVC()	{ if( !(R.P & V_FLAG) ) REL_JUMP(); }
-#define	BVS()	{ if(  (R.P & V_FLAG) ) REL_JUMP(); }
+//브런치문들
+#define	BCC()	{ if( !(R.P & C_FLAG) ) REL_JUMP(); } // Carry가 0이면 점프
+#define	BCS()	{ if(  (R.P & C_FLAG) ) REL_JUMP(); } // Carry가 1이면 점프
+#define	BNE()	{ if( !(R.P & Z_FLAG) ) REL_JUMP(); } // 결과가 0이 아니면 점프
+#define	BEQ()	{ if(  (R.P & Z_FLAG) ) REL_JUMP(); } // 결과가 0이면 점프
+#define	BPL()	{ if( !(R.P & N_FLAG) ) REL_JUMP(); } // 결과가 더 크면 점프
+#define	BMI()	{ if(  (R.P & N_FLAG) ) REL_JUMP(); } // N 이 1이면 점프
+#define	BVC()	{ if( !(R.P & V_FLAG) ) REL_JUMP(); } // Overflow가 0이면 점프
+#define	BVS()	{ if(  (R.P & V_FLAG) ) REL_JUMP(); } // Overflow가 1이면 점프
 
-// �t���O����n
+// フラグ制御系
 #define	CLC()	{ R.P &= ~C_FLAG; }
 #define	CLD()	{ R.P &= ~D_FLAG; }
 #define	CLI()	{ R.P &= ~I_FLAG; }
@@ -458,7 +504,7 @@
 #define	SED()	{ R.P |= D_FLAG; }
 #define	SEI()	{ R.P |= I_FLAG; }
 
-// Unofficial����
+// Unofficial命令
 #define	ANC()	{			\
 	R.A &= DT;			\
 	SET_ZN_FLAG( R.A );		\
@@ -490,6 +536,7 @@
 	CMP();				\
 }
 
+// Program Counter 1증가
 #define	DOP()	{			\
 	R.PC++;				\
 }
@@ -585,7 +632,7 @@
 }
 
 //
-// �R���X�g���N�^/�f�X�g���N�^
+// コンストラクタ/デストラクタ
 //
 //CPU::CPU( NES* parent ) : nes(parent)
 CPU::CPU( NES* parent )
@@ -597,7 +644,7 @@ CPU::~CPU()
 {
 }
 
-// �������A�N�Z�X
+// メモリアクセス
 //#define	OP6502(A)	(CPU_MEM_BANK[(A)>>13][(A)&0x1FFF])
 //#define	OP6502W(A)	(*((WORD*)&CPU_MEM_BANK[(A)>>13][(A)&0x1FFF]))
 
@@ -669,7 +716,7 @@ inline	WORD	CPU::RD6502W( WORD addr )
 #endif
 }
 
-// ���������C�g
+// メモリライト
 inline	void	CPU::WR6502( WORD addr, BYTE data )
 {
 	if( addr < 0x2000 ) {
@@ -682,7 +729,7 @@ inline	void	CPU::WR6502( WORD addr, BYTE data )
 }
 
 //
-// ���Z�b�g
+// リセット
 //
 void	CPU::Reset()
 {
@@ -722,7 +769,7 @@ void	CPU::SetTotalCycles( INT cycles )
 }
 
 //
-// DMA�y���f�B���O�T�C�N���ݒ�
+// DMAペンディングサイクル設定
 //
 void	CPU::DMA( INT cycles )
 {
@@ -730,7 +777,7 @@ void	CPU::DMA( INT cycles )
 }
 
 //
-// ���荞��
+// 割り込み
 //
 void	CPU::NMI()
 {
@@ -750,18 +797,18 @@ void	CPU::IRQ_NotPending()
 }
 
 //
-// �f�o�b�O�pPC�g���[�X
+// デバッグ用PCトレース
 //
 #ifdef	_DEBUG
 WORD	_PCTRACE[1024];
 #endif
 
 //
-// ���ߎ��s
+// 命令実行
 //
 INT	CPU::EXEC( INT request_cycles )
 {
-BYTE	opcode;		// �I�y�R�[�h
+BYTE	opcode;		// オペコード
 INT	OLD_cycles = TOTAL_cycles;
 INT	exec_cycles;
 // TEMP
@@ -781,7 +828,7 @@ register BYTE	DT;
 				DMA_cycles -= request_cycles;
 				TOTAL_cycles += request_cycles;
 
-				// �N���b�N��������
+				// クロック同期処理
 //				nes->Clock( request_cycles );
 				mapper->Clock( request_cycles );
 //				apu->SyncDPCM( request_cycles );
@@ -1426,7 +1473,7 @@ DEBUGOUT( "BIN DUMP ERR...\n" );
 				ADD_CYCLE(6);
 				break;
 
-	// �t���O����n
+	// フラグ制御系
 			case	0x18: // CLC
 				CLC();
 				ADD_CYCLE(2);
@@ -1457,7 +1504,7 @@ DEBUGOUT( "BIN DUMP ERR...\n" );
 				ADD_CYCLE(2);
 				break;
 
-	// �X�^�b�N�n
+	// スタック系
 			case	0x48: // PHA
 				PUSH( R.A );
 				ADD_CYCLE(3);
@@ -1468,7 +1515,7 @@ DEBUGOUT( "BIN DUMP ERR...\n" );
 				break;
 			case	0x68: // PLA (N-----Z-)
 				R.A = POP();
-				SET_ZN_FLAG(R.A); // �������Ԉ���ĂĂP�T�Ԃ͂܂���(T_T)
+				SET_ZN_FLAG(R.A); // 資料が間違ってて１週間はまった(T_T)
 				ADD_CYCLE(4);
 				break;
 			case	0x28: // PLP
@@ -1476,7 +1523,7 @@ DEBUGOUT( "BIN DUMP ERR...\n" );
 				ADD_CYCLE(4);
 				break;
 
-	// ���̑�
+	// その他
 			case	0x00: // BRK
 				BRK();
 				ADD_CYCLE(7);
@@ -1486,7 +1533,7 @@ DEBUGOUT( "BIN DUMP ERR...\n" );
 				ADD_CYCLE(2);
 				break;
 
-	// �����J���ߌQ
+	// 未公開命令群
 			case	0x0B: // ANC #$??
 			case	0x2B: // ANC #$??
 				MR_IM(); ANC();
@@ -1856,7 +1903,7 @@ INT	i;
 		request_cycles -= exec_cycles;
 		TOTAL_cycles += exec_cycles;
 
-		// �N���b�N��������
+		// クロック同期処理
 //		nes->Clock( exec_cycles );
 		mapper->Clock( exec_cycles );
 //		apu->SyncDPCM( exec_cycles );
