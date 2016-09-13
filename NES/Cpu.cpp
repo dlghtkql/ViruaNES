@@ -37,23 +37,24 @@
 //#define	OP6502W(A)	RD6502W((A))
 
 // 제로 페이지 리드 
-#define	ZPRD(A)		(RAM[(BYTE)(A)])
-#define	ZPRDW(A)	(*((LPWORD)&RAM[(BYTE)(A)]))
+#define	ZPRD(A)		(RAM[(BYTE)(A)]) //ZPRA(A)를 (RAM[(BYTE)(A)]로 치환
+#define	ZPRDW(A)	(*((LPWORD)&RAM[(BYTE)(A)])) //ZPRDW(A)를 ((LPWORD)&RAM[(BYTE)(A)]))로 치환
+//LPWORD는 WINAPI에서 쓰이는 WORD!
 //#define	ZPRDW(A)	((WORD)RAM[(BYTE)(A)]+((WORD)RAM[(BYTE)((A)+1)]<<8))
 
-#define	ZPWR(A,V)	{ RAM[(BYTE)(A)]=(V); }
-#define	ZPWRW(A,V)	{ *((LPWORD)&RAM[(BYTE)(A)])=(WORD)(V); }
+#define	ZPWR(A,V)	{ RAM[(BYTE)(A)]=(V); } //ZPWR(A ,V)를 RAM[(BYTE)(A)]=(V)로 치환
+#define	ZPWRW(A,V)	{ *((LPWORD)&RAM[(BYTE)(A)])=(WORD)(V); } //
 
-// サイクルカウンタ
-#define	ADD_CYCLE(V)	{ exec_cycles += (V); }
+// 사이클 카운터
+#define	ADD_CYCLE(V)	{ exec_cycles += (V); } //exec_cycles에 v만큼 더하고 저장한다
 //#define	ADD_CYCLE(V)	{}
 
-// EFFECTIVE ADDRESSページ境界超えチェック
-#define	CHECK_EA()	{ if( (ET&0xFF00) != (EA&0xFF00) ) ADD_CYCLE(1); }
+// EFFECTIVE ADDRESS 경계 초과 체크 
+#define	CHECK_EA()	{ if( (ET&0xFF00) != (EA&0xFF00) ) ADD_CYCLE(1); } //서로 같지 않으면 ADD_CYCLE(1)을 해줌
 //#define	CHECK_EA()	{}
 
-// フラグ操作
-// ゼロ／ネガティブフラグのチェックと設定
+// 플래그 조각
+// negative flag / zero flag 검사 
 #define	SET_ZN_FLAG(A)	{ R.P &= ~(Z_FLAG|N_FLAG); R.P |= ZN_Table[(BYTE)(A)]; }
 
 // フラグセット
