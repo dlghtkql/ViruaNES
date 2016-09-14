@@ -57,13 +57,13 @@
 // negative flag / zero flag 검사 
 #define	SET_ZN_FLAG(A)	{ R.P &= ~(Z_FLAG|N_FLAG); R.P |= ZN_Table[(BYTE)(A)]; }
 
-// フラグセット
+// 플래그 세트
 #define	SET_FLAG(V)	{ R.P |=  (V); }
-// フラグクリア
+// 플래그 클리어 
 #define	CLR_FLAG(V)	{ R.P &= ~(V); }
-// フラグテスト＆セット／クリア
+// 플래그 테스트 & 세트 / 클리어
 #define	TST_FLAG(F,V)	{ R.P &= ~(V); if((F)) R.P |= (V); }
-// フラグチェック
+// 플래그 체크
 #define	CHK_FLAG(V)	(R.P&(V))
 
 // WT .... WORD TEMP
