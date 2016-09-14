@@ -20,7 +20,8 @@
 #include "pad.h"
 #include "rom.h"
 
-PAD::PAD( NES* parent ) : nes( parent )
+PAD::PAD( NES* parent ) : nes( parent ) //PAD생성자를 만든 후에 
+//PDA가 parent인자를 받아서 nes한테 전달하도록함
 {
 	excontroller_select = 0;
 	expad = NULL;
@@ -30,12 +31,12 @@ PAD::PAD( NES* parent ) : nes( parent )
 	micbit = 0;
 }
 
-PAD::~PAD()
+PAD::~PAD() //~PAD는 virtual 함수이다 
 {
 	DirectDraw.SetZapperMode( FALSE );
 	DirectDraw.SetZapperDrawMode( FALSE );
 
-	DELETEPTR( expad );
+	DELETEPTR( expad ); // expad를 NULL로 만들어버림 
 }
 
 void	PAD::Reset()
@@ -307,7 +308,7 @@ WORD	bit = 0;
 	if( DirectInput.m_Sw[Config.controller.nButton[no][3]] || DirectInput.m_Sw[Config.controller.nButton[no][13]] )
 		bit |= 1<<7;
 
-	// �������͂��֎~����
+	// 同時入力を禁止する
 	if( (bit&((1<<4)|(1<<5))) == ((1<<4)|(1<<5)) )
 		bit &= ~((1<<4)|(1<<5));
 	if( (bit&((1<<6)|(1<<7))) == ((1<<6)|(1<<7)) )
@@ -464,7 +465,7 @@ void	PAD::NsfSub()
 	if( DirectInput.m_Sw[Config.controller.nNsfButton[5]] || DirectInput.m_Sw[Config.controller.nNsfButton[15]] )
 		nsfbit |= 1<<5;
 
-	// �������͂��֎~����
+	// 同時入力を禁止する
 	if( (nsfbit&((1<<2)|(1<<3))) == ((1<<2)|(1<<3)) )
 		nsfbit &= ~((1<<2)|(1<<3));
 	if( (nsfbit&((1<<4)|(1<<5))) == ((1<<4)|(1<<5)) )
