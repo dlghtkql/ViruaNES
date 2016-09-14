@@ -866,13 +866,13 @@ register BYTE	DT;
 	nes->Clock( request_cycles );
 	apu->SyncDPCM( request_cycles );
 
-	while( request_cycles > 0 ) {
-		exec_cycles = 0;
+	while( request_cycles > 0 ) { // request_cycles가 0보다 크면
+		exec_cycles = 0; //exec_cycles = 0으로 설정 
 
-		if( DMA_cycles ) {
-			if( request_cycles <= DMA_cycles ) {
-				DMA_cycles -= request_cycles;
-				TOTAL_cycles += request_cycles;
+		if( DMA_cycles ) { //만약 DMA_cycles면 
+			if( request_cycles <= DMA_cycles ) { //만약 request_cycles <= DMA_cycles
+				DMA_cycles -= request_cycles; //DMA_cycles에서 request_cycles를 뺴고 적용한다
+				TOTAL_cycles += request_cycles; //TOTAL_cycles에서 request_cycles를 빼고 적용한다
 
 				// 클럭 동기화
 //				nes->Clock( request_cycles );
@@ -900,6 +900,7 @@ register BYTE	DT;
 	_PCTRACE[0] = R.PC;
 #endif
 {
+	//추가 설명 필요
 static	BOOL	bTrace = FALSE;
 	if( ::GetAsyncKeyState( VK_ESCAPE ) & 0x8000 ) {
 		for( INT i = 0; i < 8; i++ ) {
@@ -921,7 +922,7 @@ static	BOOL	bTrace = FALSE;
 {
 	if( ::GetAsyncKeyState( VK_ESCAPE ) & 0x8000 ) {
 		FILE*	fp;
-DEBUGOUT( "BIN DUMP\n" );
+DEBUGOUT( "BIN DUMP\n" );훃
 		if( (fp = ::fopen( "mainram.bin", "wb" )) != NULL ) {
 			fwrite( CPU_MEM_BANK[3], 8*1024, 1, fp );
 			fwrite( CPU_MEM_BANK[4], 8*1024, 1, fp );
@@ -1519,7 +1520,7 @@ DEBUGOUT( "BIN DUMP ERR...\n" );
 				ADD_CYCLE(6);
 				break;
 
-	// フラグ制御系
+	// 플래그 제어
 			case	0x18: // CLC
 				CLC();
 				ADD_CYCLE(2);
@@ -1550,7 +1551,7 @@ DEBUGOUT( "BIN DUMP ERR...\n" );
 				ADD_CYCLE(2);
 				break;
 
-	// スタック系
+	// 스택
 			case	0x48: // PHA
 				PUSH( R.A );
 				ADD_CYCLE(3);
@@ -1561,7 +1562,7 @@ DEBUGOUT( "BIN DUMP ERR...\n" );
 				break;
 			case	0x68: // PLA (N-----Z-)
 				R.A = POP();
-				SET_ZN_FLAG(R.A); // 資料が間違ってて１週間はまった(T_T)
+				SET_ZN_FLAG(R.A); 
 				ADD_CYCLE(4);
 				break;
 			case	0x28: // PLP
@@ -1569,7 +1570,7 @@ DEBUGOUT( "BIN DUMP ERR...\n" );
 				ADD_CYCLE(4);
 				break;
 
-	// その他
+	// 기타
 			case	0x00: // BRK
 				BRK();
 				ADD_CYCLE(7);
@@ -1579,7 +1580,7 @@ DEBUGOUT( "BIN DUMP ERR...\n" );
 				ADD_CYCLE(2);
 				break;
 
-	// 未公開命令群
+	// 미공개 명령
 			case	0x0B: // ANC #$??
 			case	0x2B: // ANC #$??
 				MR_IM(); ANC();
@@ -1949,7 +1950,7 @@ INT	i;
 		request_cycles -= exec_cycles;
 		TOTAL_cycles += exec_cycles;
 
-		// クロック同期処理
+		// 클럭 동기화
 //		nes->Clock( exec_cycles );
 		mapper->Clock( exec_cycles );
 //		apu->SyncDPCM( exec_cycles );
