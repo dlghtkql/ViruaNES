@@ -43,7 +43,7 @@
 //#define	ZPRDW(A)	((WORD)RAM[(BYTE)(A)]+((WORD)RAM[(BYTE)((A)+1)]<<8))
 
 #define	ZPWR(A,V)	{ RAM[(BYTE)(A)]=(V); } //ZPWR(A ,V)를 RAM[(BYTE)(A)]=(V)로 치환
-#define	ZPWRW(A,V)	{ *((LPWORD)&RAM[(BYTE)(A)])=(WORD)(V); } //
+#define	ZPWRW(A,V)	{ *((LPWORD)&RAM[(BYTE)(A)])=(WORD)(V); } //RAM의 주소자체를 사용함
 
 // 사이클 카운터
 #define	ADD_CYCLE(V)	{ exec_cycles += (V); } //exec_cycles에 v만큼 더하고 저장한다
@@ -71,6 +71,7 @@
 // ET .... EFFECTIVE ADDRESS TEMP
 // DT .... DATA
 
+//아래 define들은 오퍼랜드를 가져오는 역할
 #define	MR_IM()	{		\
 	DT = OP6502( R.PC++ );	\
 }
@@ -80,47 +81,47 @@
 }
 #define	MR_ZX()	{		\
 	DT = OP6502( R.PC++ );	\
-	EA = (WORD)(DT + R.X);	\
+	EA = (WORD)(DT + R.X);	\ 
 	DT = ZPRD( EA );	\
-}
+}//R은 R6502를 말하고 X는 X INDEX를 뜻함
 #define	MR_ZY()	{		\
 	DT = OP6502( R.PC++ );	\
 	EA = (WORD)(DT + R.Y);	\
 	DT = ZPRD( EA );	\
-}
+}// Y INDEX
 #define	MR_AB()	{		\
 	EA = OP6502W( R.PC );	\
 	R.PC += 2;		\
 	DT = RD6502( EA );	\
-}
+} // PROGRAM COUNTER 2개 상승
 #define	MR_AX()	{		\
 	ET = OP6502W( R.PC );	\
 	R.PC += 2;		\
 	EA = ET + R.X;		\
 	DT = RD6502( EA );	\
-}
+} // PC+2 하고 ET와 X INDEX를 더함
 #define	MR_AY()	{		\
 	ET = OP6502W( R.PC );	\
 	R.PC += 2;		\
 	EA = ET + R.Y;		\
 	DT = RD6502( EA );	\
-}
+} // PC+2를 하고 ET와 Y INDEX를 더함
 #define	MR_IX()	{		\
 	DT = OP6502( R.PC++ );	\
 	EA = ZPRDW( DT + R.X );	\
 	DT = RD6502( EA );	\
-}
+} //ZPRDW로 DT 와 X INDEX를 더해줌
 #define	MR_IY()	{		\
 	DT = OP6502( R.PC++ );	\
 	ET = ZPRDW( DT );	\
 	EA = ET + R.Y;		\
 	DT = RD6502( EA );	\
-}
+} //ZPRDW로 DT를 가져오고 ET + Y INDEX를 더함
 
 // EFFECTIVE ADDRESS
 #define	EA_ZP()	{		\
 	EA = OP6502( R.PC++ );	\
-}
+} 
 #define	EA_ZX()	{		\
 	DT = OP6502( R.PC++ );	\
 	EA = (WORD)(DT + R.X);	\
@@ -153,13 +154,13 @@
 	EA = ET + R.Y;		\
 }
 
-// メモリライト
-#define	MW_ZP()		ZPWR(EA,DT)
-#define	MW_EA()		WR6502(EA,DT)
+// 메모리 WRITE
+#define	MW_ZP()		ZPWR(EA,DT) // EA,DT를 제로 페이지 리드함
+#define	MW_EA()		WR6502(EA,DT)//void형 WR6502에 인자로 EA와 DT를 넣어줌
 
-// STACK操作
-#define	PUSH(V)		{ STACK[R.S--]=(V); }
-#define	POP()		STACK[++R.S]
+// STACK조작
+#define	PUSH(V)		{ STACK[R.S--]=(V); } // 스택포인터를 --하고 V에 담음
+#define	POP()		STACK[++R.S] 스택포인터를 먼저 ++함
 
 // 算術演算系
 /* ADC (NV----ZC) */
