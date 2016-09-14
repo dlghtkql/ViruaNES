@@ -422,24 +422,30 @@ TST_FLAG를 사용함
 	SET_ZN_FLAG( (BYTE)WT );		\
 }
 
-// ジャンプ／リターン系
-#if	0
+// 점프 / 리턴
+#if	0 //결과가 0이면 코드를 컴파일함
+// WORD TEMP = RD6502W에 PC를 넣음
+// EFFECTIVE ADDRESS = RD6502에 OP6502W(R.PC)를 넣음
+// WT와 0XFF00을 & 한것과 WT+1와 0X00FF를 &한것의 |를 WT에 넣는다
+// 프로그램 카운터에 EA+RD6502(WT)와 0X100을 곱한것을 넣는다
 #define	JMP_ID() {				\
 	WT = OP6502W(R.PC);			\
 	EA = RD6502(WT);			\
 	WT = (WT&0xFF00)|((WT+1)&0x00FF);	\
 	R.PC = EA+RD6502(WT)*0x100;		\
 }
-#else
+#else // 0이 아니라면
 #define	JMP_ID() {		\
 	ET = OP6502W(R.PC);	\
 	EA = RD6502W(ET);	\
 	R.PC = EA;		\
 }
-#endif
+#endif // 조건부 컴파일 종료
 #define	JMP() {			\
 	R.PC = OP6502W( R.PC );	\
 }
+// R.PC를 8만큼 오른쪽으로 SHIFT 연산을 함
+// R.PC와 0xFF를 & 비트연산자로 비교함
 #define	JSR() {			\
 	EA = OP6502W( R.PC );	\
 	R.PC++;			\
@@ -447,16 +453,28 @@ TST_FLAG를 사용함
 	PUSH( R.PC&0xFF );	\
 	R.PC = EA;		\
 }
+// R.PC = 스택 포인터를 1 더한다
+// R.PC에 R.PC와 POP()*0x0100 한 값을 넣는다 
+// R.PC++
 #define	RTS() {			\
 	R.PC  = POP();		\
 	R.PC |= POP()*0x0100;	\
 	R.PC++;			\
 }
+// R.P에 POP() 와 R_FLAG(1)을 | 비트연산자로 비교함
 #define	RTI() {			\
 	R.P   = POP() | R_FLAG;	\
 	R.PC  = POP();		\
 	R.PC |= POP()*0x0100;	\
 }
+//스택 포인터에서 -1 한 값에 P.PC>>8을 넣음
+//스택 포인터에서 -1 한 값에 R.PC&0xFF를 넣음
+//레지스터 플래그와 ~B_FLAG를 & 비트 연산자로 계산함
+//스택 포인터에서 -1 한 값에 레지스터 플래그를 넣음
+//R.P에 I_FLAG와 R.P를 | 한 값을 넣어줌
+//RD6502W(0XFFFA)를 R.PC에 넣어줌
+//R.INT_pending에 R.INT_pending 와 ~0X01을 & 연산한것을 넣어준다
+//exec_cycles 를 6번 더해준다 
 #define	_NMI() {			\
 	PUSH( R.PC>>8 );		\
 	PUSH( R.PC&0xFF );		\
@@ -467,6 +485,8 @@ TST_FLAG를 사용함
 	R.INT_pending &= ~NMI_FLAG;	\
 	exec_cycles += 6;		\
 }
+//만약 R.P와 0x04를 & 한 값이 아니라면 
+//_NMI랑 비슷함 
 #define	_IRQ() {				\
 	if( !(R.P & I_FLAG) ) {			\
 		PUSH( R.PC>>8 );		\
@@ -488,7 +508,11 @@ TST_FLAG를 사용함
 	SET_FLAG( I_FLAG );		\
 	R.PC = RD6502W(IRQ_VECTOR);	\
 }
-
+//결과가 1이라면 
+// ET = 프로그램 카운터
+// EA = 프로그램 카운터 +SBYTE형DT
+// 프로그램 카운터에 EA를 넣어주고 1만큼 사이클을 돌려줌
+//CHECK_EA를 해줌
 #if	1
 #define	REL_JUMP() {		\
 	ET = R.PC;		\
@@ -514,7 +538,7 @@ TST_FLAG를 사용함
 #define	BVC()	{ if( !(R.P & V_FLAG) ) REL_JUMP(); } // Overflow가 0이면 점프
 #define	BVS()	{ if(  (R.P & V_FLAG) ) REL_JUMP(); } // Overflow가 1이면 점프
 
-// フラグ制御系
+//플래그 제어 
 #define	CLC()	{ R.P &= ~C_FLAG; }
 #define	CLD()	{ R.P &= ~D_FLAG; }
 #define	CLI()	{ R.P &= ~I_FLAG; }
@@ -523,7 +547,7 @@ TST_FLAG를 사용함
 #define	SED()	{ R.P |= D_FLAG; }
 #define	SEI()	{ R.P |= I_FLAG; }
 
-// Unofficial命令
+// 비공식적 명령
 #define	ANC()	{			\
 	R.A &= DT;			\
 	SET_ZN_FLAG( R.A );		\
