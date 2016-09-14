@@ -200,8 +200,8 @@
 }
 /* INX (N-----Z-) */
 /*
-*	
- *
+*	난 몰랐던 INX
+ *	INDEX X에 1더함
 */
 #define	INX() {			\
 	R.X++;			\
@@ -209,8 +209,8 @@
 }
 /* INY (N-----Z-) */
 /*
-*
- *
+*	나 몰랐던 INY
+ *	INDEX Y에 1 더함
 */
 #define	INY() {			\
 	R.Y++;			\
@@ -228,17 +228,19 @@
 }
 
 /* DEX (N-----Z-) */
+// INDEX X 를 -1 함
 #define	DEX() {			\
 	R.X--;			\
 	SET_ZN_FLAG(R.X);	\
 }
 /* DEY (N-----Z-) */
+// INDEX Y 를 -1 함
 #define	DEY() {			\
 	R.Y--;			\
 	SET_ZN_FLAG(R.Y);	\
 }
 
-// 論理演算系
+// 논리연산쪽~@~@
 /* AND (N-----Z-) */
 /*
 *	AND 연산
@@ -284,6 +286,8 @@
 /*
 *	왼쪽으로 Shift 연산 한번
  *	[!] 추가 설명 필요
+ *	플래그 테스트 & 세트 / 클리어에 
+ *	DT&0x80와 캐리플래그를 인자로 넣어줌
 */
 #define	ASL() {				\
 	TST_FLAG( DT&0x80, C_FLAG );	\
@@ -292,11 +296,15 @@
 }
 
 /* LSR_A (N-----ZC) */
+//DT가 CPU registers 로 바뀌고
+//R.A와 0x01을 비교하고 오른쪽으로
+//SHIFT 연산을 함 
 #define	LSR_A() {			\
 	TST_FLAG( R.A&0x01, C_FLAG );	\
 	R.A >>= 1;			\
 	SET_ZN_FLAG(R.A);		\
 }
+//이 아래부터는 더 알아본 후 간략하게 설명하겠음
 /* LSR (N-----ZC) */
 #define	LSR() {				\
 	TST_FLAG( DT&0x01, C_FLAG );	\
@@ -357,12 +365,15 @@
 	TST_FLAG( DT&0x40, V_FLAG );		\
 }
 
-// ロード／ストア系
+// 로드 / 스토어 
 /* LDA (N-----Z-) */
+// CPU registers에 DT를 넣어주고 FLAG에 인자고 DT를 넣음
 #define	LDA()	{ R.A = DT; SET_ZN_FLAG(R.A); }
 /* LDX (N-----Z-) */
+// INDEX X 
 #define	LDX()	{ R.X = DT; SET_ZN_FLAG(R.X); }
 /* LDY (N-----Z-) */
+// INDEX Y 
 #define	LDY()	{ R.Y = DT; SET_ZN_FLAG(R.Y); }
 
 /* STA (--------) */
@@ -373,6 +384,7 @@
 #define	STY()	{ DT = R.Y; }
 
 /* TAX (N-----Z-) */
+//INDEX X에 cpu registers를 적용시키고 ..
 #define	TAX()	{ R.X = R.A; SET_ZN_FLAG(R.X); }
 /* TXA (N-----Z-) */
 #define	TXA()	{ R.A = R.X; SET_ZN_FLAG(R.A); }
@@ -383,15 +395,20 @@
 /* TSX (N-----Z-) */
 #define	TSX()	{ R.X = R.S; SET_ZN_FLAG(R.X); }
 /* TXS (--------) */
+//스택 포인터에 X INDEX를 넣는다 
 #define	TXS()	{ R.S = R.X; }
 
-// 比較系
-/* CMP (N-----ZC) */
+// 비교
+/* CMP (N-----ZC) 
+WORD TEMP에 R.A - DATA를 해줌
+TST_FLAG를 사용함 
+*/
 #define	CMP() {					\
 	WT = R.A - DT;				\
 	TST_FLAG( (WT&0x8000)==0, C_FLAG );	\
 	SET_ZN_FLAG( (BYTE)WT );		\
 }
+
 /* CPX (N-----ZC) */
 #define	CPX() {					\
 	WT = R.X - DT;				\
