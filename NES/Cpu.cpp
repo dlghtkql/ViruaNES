@@ -675,7 +675,7 @@ TST_FLAG를 사용함
 }
 
 //
-// コンストラクタ/デストラクタ
+// 생성자 / 소멸자
 //
 //CPU::CPU( NES* parent ) : nes(parent)
 CPU::CPU( NES* parent )
@@ -687,25 +687,27 @@ CPU::~CPU()
 {
 }
 
-// メモリアクセス
+// 매모리 엑세스
 //#define	OP6502(A)	(CPU_MEM_BANK[(A)>>13][(A)&0x1FFF])
 //#define	OP6502W(A)	(*((WORD*)&CPU_MEM_BANK[(A)>>13][(A)&0x1FFF]))
-
-#if	0
+ 
+#if	0  // 만약 0이면 
 #define	OP6502(A)	RD6502((A))
 #define	OP6502W(A)	RD6502W((A))
 #else
 inline	BYTE	OP6502( WORD addr )
 {
-	return	CPU_MEM_BANK[addr>>13][addr&0x1FFF];
+	return	CPU_MEM_BANK[addr>>13][addr&0x1FFF]; //addr을 13만큼 오른쪽으로 shift 이동을 하고 addr과0x1fff를 비교한다
 }
 
 inline	WORD	OP6502W( WORD addr )
 {
-#if	0
-	WORD	ret;
-	ret  = (WORD)CPU_MEM_BANK[(addr+0)>>13][(addr+0)&0x1FFF];
+#if	0 //만약 0 이라면 
+	WORD	ret; 
+	ret  = (WORD)CPU_MEM_BANK[(addr+0)>>13][(addr+0)&0x1FFF]; 
+	// ret에 ~@~@
 	ret |= (WORD)CPU_MEM_BANK[(addr+1)>>13][(addr+1)&0x1FFF]<<8;
+	// ret에 ~@~@	
 	return	ret;
 #else
 	return	*((WORD*)&CPU_MEM_BANK[addr>>13][addr&0x1FFF]);
@@ -713,16 +715,16 @@ inline	WORD	OP6502W( WORD addr )
 }
 #endif
 
-inline	BYTE	CPU::RD6502( WORD addr )
-{
-	if( addr < 0x2000 ) {
+inline	BYTE	CPU::RD6502( WORD addr ) //RD6502
+{	
+	if( addr < 0x2000 ) { 			//만약 주소가 0x2000보다 작으면 
 	// RAM (Mirror $0800, $1000, $1800)
-		return	RAM[addr&0x07FF];
-	} else if( addr < 0x8000 ) {
+		return	RAM[addr&0x07FF]; 	//RAM[addr&0x7FF] 를 반환한다
+	} else if( addr < 0x8000 ) {		//0x2000보다 작지 않고 0x8000보다 작으면 
 	// Others
-		return	nes->Read( addr );
+		return	nes->Read( addr ); // nes에 있는 Read에 addr을 넣고 반환한다
 	}
-#ifdef	_DATATRACE
+#ifdef	_DATATRACE //_DATABASE가 정의되어 있으면 컴파일 한다
 	if( PROM_ACCESS ) {
 		INT	ofs = CPU_MEM_PAGE[addr>>13]*0x2000;	// 8K
 		PROM_ACCESS[ofs+(addr&0x1FFF)] = 0xFF;
@@ -732,7 +734,7 @@ inline	BYTE	CPU::RD6502( WORD addr )
 	return	CPU_MEM_BANK[addr>>13][addr&0x1FFF];
 }
 
-inline	WORD	CPU::RD6502W( WORD addr )
+inline	WORD	CPU::RD6502W( WORD addr ) //RD6502W
 {
 	if( addr < 0x2000 ) {
 	// RAM (Mirror $0800, $1000, $1800)
@@ -740,6 +742,7 @@ inline	WORD	CPU::RD6502W( WORD addr )
 	} else if( addr < 0x8000 ) {
 	// Others
 		return	(WORD)nes->Read(addr)+(WORD)nes->Read(addr+1)*0x100;
+		//nes에 있는 Read + nes에 있는 Read(addr+1)*0x100한것을 반환한다
 	}
 #ifdef	_DATATRACE
 	if( PROM_ACCESS ) {
@@ -759,7 +762,7 @@ inline	WORD	CPU::RD6502W( WORD addr )
 #endif
 }
 
-// メモリライト
+// 메모리 Write
 inline	void	CPU::WR6502( WORD addr, BYTE data )
 {
 	if( addr < 0x2000 ) {
@@ -772,7 +775,7 @@ inline	void	CPU::WR6502( WORD addr, BYTE data )
 }
 
 //
-// リセット
+// 재설정
 //
 void	CPU::Reset()
 {
@@ -812,7 +815,7 @@ void	CPU::SetTotalCycles( INT cycles )
 }
 
 //
-// DMAペンディングサイクル設定
+// DMA 보류 주기 설정
 //
 void	CPU::DMA( INT cycles )
 {
@@ -820,7 +823,7 @@ void	CPU::DMA( INT cycles )
 }
 
 //
-// 割り込み
+// 인터럽트
 //
 void	CPU::NMI()
 {
@@ -840,18 +843,18 @@ void	CPU::IRQ_NotPending()
 }
 
 //
-// デバッグ用PCトレース
+// 디버깅용PC추적
 //
 #ifdef	_DEBUG
 WORD	_PCTRACE[1024];
 #endif
 
 //
-// 命令実行
+// 명령실행
 //
 INT	CPU::EXEC( INT request_cycles )
 {
-BYTE	opcode;		// オペコード
+BYTE	opcode;		// 작동코드
 INT	OLD_cycles = TOTAL_cycles;
 INT	exec_cycles;
 // TEMP
@@ -871,7 +874,7 @@ register BYTE	DT;
 				DMA_cycles -= request_cycles;
 				TOTAL_cycles += request_cycles;
 
-				// クロック同期処理
+				// 클럭 동기화
 //				nes->Clock( request_cycles );
 				mapper->Clock( request_cycles );
 //				apu->SyncDPCM( request_cycles );
