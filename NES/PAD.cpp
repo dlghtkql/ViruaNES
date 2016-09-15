@@ -39,7 +39,7 @@ PAD::~PAD() //~PAD는 virtual 함수이다
 	DELETEPTR( expad ); // expad를 NULL로 만들어버림 
 }
 
-void	PAD::Reset()
+void	PAD::Reset()// PAD의 생성자 RESET
 {
 	pad1bit = pad2bit = 0;
 	bStrobe = FALSE;
@@ -111,7 +111,7 @@ void	PAD::SetExController( INT type )
 	// ExPad Instance create
 	switch( type ) {
 		case	EXCONTROLLER_ZAPPER:
-			expad = new EXPAD_Zapper( nes );
+			expad = new EXPAD_Zapper( nes ); //expad에 EXPAD_Zapper( nes )를 넣는다
 			bZapperMode = TRUE;
 			DirectDraw.SetZapperMode( TRUE );
 			DirectDraw.SetZapperDrawMode( TRUE );
