@@ -404,21 +404,21 @@ LONG	FileSize;
 		} else if( header.ID[0] == 'F' && header.ID[1] == 'D'
 			&& header.ID[2] == 'S' && header.ID[3] == 0x1A ) {
 		// FDS(Nintendo Disk System)
-			// ディスクサイズ
+			// 디스크의 크기
 			diskno = header.PRG_PAGE_SIZE;
 
 			if( FileSize < (16+65500*diskno) ) {
-				// ディスクサイズが異常です
+				// 디스크 크기가 이상함니다
 				throw	CApp::GetErrorString( IDS_ERROR_ILLEGALDISKSIZE );
 			}
 			if( diskno > 4 ) {
-				// 4面より多いディスクは対応していません
+				// 4면보다 많은 디스크는 지원하지 않음
 				throw	CApp::GetErrorString( IDS_ERROR_UNSUPPORTDISK );
 			}
 
 			ZeroMemory( &header, sizeof(NESHEADER) );
 
-			// ダミーヘッダを作る
+			// 더미헤더만듬
 			header.ID[0] = 'N';
 			header.ID[1] = 'E';
 			header.ID[2] = 'S';
@@ -431,12 +431,12 @@ LONG	FileSize;
 			PRGsize = sizeof(NESHEADER)+65500*(LONG)diskno;
 			// PRG BANK
 			if( !(lpPRG = (LPBYTE)malloc( PRGsize )) ) {
-				// メモリを確保出来ません
+				// 메모리 확보 불가
 				throw	CApp::GetErrorString( IDS_ERROR_OUTOFMEMORY );
 			}
-			// データのバックアップ用
+			// 데이터백업
 			if( !(lpDisk = (LPBYTE)malloc( PRGsize )) ) {
-				// メモリを確保出来ません
+				// 메모리확보불가
 				throw	CApp::GetErrorString( IDS_ERROR_OUTOFMEMORY );
 			}
 			// CHR BANK
@@ -444,7 +444,7 @@ LONG	FileSize;
 
 			memcpy( lpPRG, &header, sizeof(NESHEADER) );
 			memcpy( lpPRG+sizeof(NESHEADER), temp+sizeof(NESHEADER), PRGsize-sizeof(NESHEADER) );
-			// データの書き換え場所特定用
+			// 데이터 재기록 장소를 특정지어줌
 			::ZeroMemory( lpDisk, PRGsize );
 //			memcpy( lpDisk, &header, sizeof(NESHEADER) );
 //			memcpy( lpDisk+sizeof(NESHEADER), temp+sizeof(NESHEADER), PRGsize-sizeof(NESHEADER) );
@@ -455,11 +455,11 @@ LONG	FileSize;
 			lpPRG[3] = 0x1A;
 			lpPRG[4] = (BYTE)diskno;
 
-			// DISKSYSTEM BIOSのロード
+			// DISKSYSTEM BIOS로드
 			string	Path = CPathlib::MakePathExt( CApp::GetModulePath(), "DISKSYS", "ROM" );
 
 			if( !(fp = fopen( Path.c_str(), "rb" )) ) {
-				// DISKSYS.ROMがありません
+				// DISKSYS.ROM이 존재하지 않음
 				throw	CApp::GetErrorString( IDS_ERROR_NODISKBIOS );
 			}
 
@@ -467,29 +467,29 @@ LONG	FileSize;
 			FileSize = ftell( fp );
 			fseek( fp, 0, SEEK_SET );
 			if( FileSize < 17 ) {
-				// ファイルサイズが小さすぎます
+				// 파일 크기가 너무 작다
 				throw	CApp::GetErrorString( IDS_ERROR_SMALLFILE );
 			}
 			if( !(bios = (LPBYTE)malloc( FileSize )) ) {
-				// メモリを確保出来ません
+				// 메모리 확보를 못해
 				throw	CApp::GetErrorString( IDS_ERROR_OUTOFMEMORY );
 			}
 			if( fread( bios, FileSize, 1, fp ) != 1 ) {
-				// ファイルの読み込みに失敗しました
+				// 파일 읽기 실패
 				throw	CApp::GetErrorString( IDS_ERROR_READ );
 			}
 			FCLOSE( fp );
 
 			if( !(lpDiskBios = (LPBYTE)malloc( 8*1024 )) ) {
-				// メモリを確保出来ません
+				// 메모리 확보 못해 
 				throw	CApp::GetErrorString( IDS_ERROR_OUTOFMEMORY );
 			}
 
 			if( bios[0] == 'N' && bios[1] == 'E' && bios[2] == 'S' && bios[3] == 0x1A ) {
-			// NES形式BIOS
+			// NES 형식 BIOS
 				memcpy( lpDiskBios, bios+0x6010, 8*1024 );
 			} else {
-			// 生BIOS
+			// 리얼 BIOS
 				memcpy( lpDiskBios, bios, 8*1024 );
 			}
 			FREE( bios );
@@ -499,7 +499,7 @@ LONG	FileSize;
 			bNSF = TRUE;
 			ZeroMemory( &header, sizeof(NESHEADER) );
 
-			// ヘッダコピー
+			// 헤더 복사 
 			memcpy( &nsfheader, temp, sizeof(NSFHEADER) );
 
 			PRGsize = FileSize-sizeof(NSFHEADER);
