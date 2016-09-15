@@ -147,7 +147,7 @@ void	PAD::SetExController( INT type )
 	}
 }
 
-DWORD	PAD::GetSyncData()
+DWORD	PAD::GetSyncData() //무슨 역할을 하는지 정확히 이해가 안감 추가 보충 바람 
 {
 DWORD	ret;
 
