@@ -106,11 +106,11 @@ INDIVIDUALINFO	idvinfo;
 
 	hDLL = NULL;
 	for( INT i = 0; pszArchiver[i]; i++ ) {
-		// DLLアンロード
+		// DLL언로드
 		FREEDLL( hDLL );
 
-		// DLLロード
-		if( !(hDLL = LoadLibrary( pszArchiver[i] )) )
+		// DLL로드
+		if( !(hDLL = LoadLibrary( pszArchiver[i] )) ) //실패할경우 hDLL에 NULL이 들어감!
 			continue;
 
 		CHAR	szTemp[256];
@@ -118,11 +118,11 @@ INDIVIDUALINFO	idvinfo;
 		CHECKARCHIVE	CheckArchive;
 		if( !(CheckArchive = (CHECKARCHIVE)GetProcAddress( hDLL, szTemp )) )
 			continue;
-		// 対応するアーカイブかチェックする
+		// 해당하는 아카이브가 있는지 확인
 		if( !CheckArchive( fname, 1 ) )
 			continue;
 
-		// アーカイブ内に対応するファイルがあるかのチェック
+		// 아카이브에 해당하는 파일이 있는지 체크
 		OPENARCHIVE	OpenArchive;
 		CLOSEARCHIVE	CloseArchive;
 		FINDFIRST	FindFirst;
@@ -147,15 +147,15 @@ INDIVIDUALINFO	idvinfo;
 				bFound = TRUE;
 				break;
 			} else if( ret == -1 ) {	// Not found.
-			} else {			// 異常終了
+			} else {			// 비정상적으로 종료
 				break;
 			}
 		}
-		if( !bFound )
+		if( !bFound ) //bfound가 아니라면
 			continue;
 
 		if( !pszCommand[i] ) {
-		// メモリ解凍あり(UNLHA32,UNZIP32)
+		// 메모리 압축 해놓음 (UNLHA32,UNZIP32)
 			*lpdwSize = idvinfo.dwOriginalSize;
 			*ppBuf = (LPBYTE)malloc( *lpdwSize );
 
@@ -169,7 +169,7 @@ INDIVIDUALINFO	idvinfo;
 				BYTE	szFile[FNAME_MAX32+1];
 				LPBYTE	lpF0, lpF1;
 
-				// 正規表現を切るオプションが欲しかった....
+				// 정규식을 자르는 옵션이 필요
 				lpF0 = (LPBYTE)idvinfo.szFileName;
 				lpF1 = szFile;
 				while( *lpF0 ) {
@@ -193,7 +193,7 @@ INDIVIDUALINFO	idvinfo;
 			if( ret == 0 )
 				return TRUE;
 		} else {
-		// メモリ解凍が無い場合
+		// 메모리 압축이 안된 경우
 			CHAR	szCmd [256];
 			CHAR	szTempPath[_MAX_PATH];
 			EXECUTECOMMAND	ExecuteCommand;
@@ -209,33 +209,33 @@ INDIVIDUALINFO	idvinfo;
 			string	FileName = CPathlib::MakePath( szTempPath, idvinfo.szFileName );
 
 			FILE *fp = NULL;
-			if( (fp = fopen( FileName.c_str(), "rb" )) ) {
-				// ファイルサイズ取得
-				fseek( fp, 0, SEEK_END );
+			if( (fp = fopen( FileName.c_str(), "rb" )) ) { // FileName.c_str을 읽기전용으로 염
+				// 파일 크기 취득
+				fseek( fp, 0, SEEK_END );// 파일의 끝에서 0번을 건너뜀
 				*lpdwSize = ftell( fp );
-				fseek( fp, 0, SEEK_SET );
+				fseek( fp, 0, SEEK_SET ); // 파일의 시작에서 0 번을 건너뜀
 				if( *lpdwSize < 17 ) {
-					// ファイルサイズが小さすぎます
+					// 파일크기가 넘나 작은것
 					throw	CApp::GetErrorString( IDS_ERROR_SMALLFILE );
 				}
 
-				// テンポラリメモリ確保
+				// 임시 메모리 확보
 				if( !(*ppBuf = (LPBYTE)malloc( *lpdwSize )) ) {
 					FCLOSE( fp );
-					// メモリを確保出来ません
+					// 메모리 확보 불가
 					throw	CApp::GetErrorString( IDS_ERROR_OUTOFMEMORY );
 				}
-				// サイズ分読み込み
+				// 사이즈 만큼 읽기
 				if( fread( *ppBuf, *lpdwSize, 1, fp ) != 1 ) {
 					FCLOSE( fp );
 					FREE( *ppBuf );
-					// ファイルの読み込みに失敗しました
+					// 파일의 읽기를 실패함
 					throw	CApp::GetErrorString( IDS_ERROR_READ );
 				}
 				FCLOSE( fp );
 				DeleteFile( FileName.c_str() );
 			} else {
-				// xxx ファイルを開けません
+				// 파일을 열 수 없음 
 				LPCSTR	szErrStr = CApp::GetErrorString( IDS_ERROR_OPEN );
 				sprintf( szErrorString, szErrStr, fname );
 				throw	szErrorString;
@@ -250,7 +250,7 @@ INDIVIDUALINFO	idvinfo;
 // Archive
 
 //
-// コンストラクタ
+// 생성자
 //
 ROM::ROM( const char* fname )
 {
@@ -278,59 +278,59 @@ LONG	FileSize;
 #endif
 	try {
 		if( !(fp = ::fopen( fname, "rb" )) ) {
-			// xxx ファイルを開けません
+			// 파일을 열 수 없슴니다 
 			LPCSTR	szErrStr = CApp::GetErrorString( IDS_ERROR_OPEN );
 			::wsprintf( szErrorString, szErrStr, fname );
 			throw	szErrorString;
 		}
 
-		// ファイルサイズ取得
+		// 파일 크기 얻기? 확보?
 		::fseek( fp, 0, SEEK_END );
 		FileSize = ::ftell( fp );
 		::fseek( fp, 0, SEEK_SET );
-		// ファイルサイズチェック(NESヘッダ+1バイト以上か？)
+		// 파일 크기 얻기(NES헤더에서 +1바이트(?) 보충설명 필요)
 		if( FileSize < 17 ) {
-			// ファイルサイズが小さすぎます
+			// 파일 크기가 너무 작아요 
 			throw	CApp::GetErrorString( IDS_ERROR_SMALLFILE );
 		}
 
-		// テンポラリメモリ確保
+		// 임시 메모리 확보
 		if( !(temp = (LPBYTE)::malloc( FileSize )) ) {
-			// メモリを確保出来ません
+			// 메모리 확보 불가 
 			throw	CApp::GetErrorString( IDS_ERROR_OUTOFMEMORY );
 		}
 
-		// サイズ分読み込み
+		// 크기 읽기
 		if( ::fread( temp, FileSize, 1, fp ) != 1 ) {
-			// ファイルの読み込みに失敗しました
+			// 파일의 읽기에 실패함
 			throw	CApp::GetErrorString( IDS_ERROR_READ );
 		}
 
 		FCLOSE( fp );
 
-		// ヘッダコピー
+		// 헤더 복사 	
 		::memcpy( &header, temp, sizeof(NESHEADER) );
 
 		if( header.ID[0] == 'N' && header.ID[1] == 'E'
 		 && header.ID[2] == 'S' && header.ID[3] == 0x1A ) {
-			// ヘッダコピー
+			// 헤더복사
 			memcpy( &header, temp, sizeof(NESHEADER) );
 		} else if( header.ID[0] == 'F' && header.ID[1] == 'D'
 			&& header.ID[2] == 'S' && header.ID[3] == 0x1A ) {
-			// ヘッダコピー
+			// 헤더복사
 			memcpy( &header, temp, sizeof(NESHEADER) );
 		} else if( header.ID[0] == 'N' && header.ID[1] == 'E'
 			&& header.ID[2] == 'S' && header.ID[3] == 'M') {
-			// ヘッダコピー
+			// 헤더복사
 			memcpy( &header, temp, sizeof(NESHEADER) );
 		} else {
 			FREE( temp );
 
 			if( !Uncompress( fname, &temp, (LPDWORD)&FileSize ) ) {
-				// 未対応形式です
+				// 지원하지 않는 형식 
 				throw	CApp::GetErrorString( IDS_ERROR_UNSUPPORTFORMAT );
 			}
-			// ヘッダコピー
+			// 헤더 복사 
 			memcpy( &header, temp, sizeof(NESHEADER) );
 		}
 
@@ -339,7 +339,7 @@ LONG	FileSize;
 
 		if( header.ID[0] == 'N' && header.ID[1] == 'E'
 		 && header.ID[2] == 'S' && header.ID[3] == 0x1A ) {
-		// 普通のNESファイル
+		// 일반적인 NES 파일 
 			PRGsize = (LONG)header.PRG_PAGE_SIZE*0x4000;
 			CHRsize = (LONG)header.CHR_PAGE_SIZE*0x2000;
 			PRGoffset = sizeof(NESHEADER);
@@ -351,13 +351,13 @@ LONG	FileSize;
 			}
 
 			if( PRGsize <= 0 ) {
-				// NESヘッダが異常です
+				// NES 헤더가 이상함
 				throw	CApp::GetErrorString( IDS_ERROR_INVALIDNESHEADER );
 			}
 
 			// PRG BANK
 			if( !(lpPRG = (LPBYTE)malloc( PRGsize )) ) {
-				// メモリを確保出来ません
+				// 메모리 확보 불가
 				throw	CApp::GetErrorString( IDS_ERROR_OUTOFMEMORY );
 			}
 
@@ -366,14 +366,14 @@ LONG	FileSize;
 			// CHR BANK
 			if( CHRsize > 0 ) {
 				if( !(lpCHR = (LPBYTE)malloc( CHRsize )) ) {
-					// メモリを確保出来ません
+					// 메모리 확보 불가
 					throw	CApp::GetErrorString( IDS_ERROR_OUTOFMEMORY );
 				}
 
 				if( FileSize >= CHRoffset+CHRsize ) {
 					memcpy( lpCHR, temp+CHRoffset, CHRsize );
 				} else {
-					// CHRバンク少ない…
+					// CHR BANK가 너무 작음
 					CHRsize	-= (CHRoffset+CHRsize - FileSize);
 					memcpy( lpCHR, temp+CHRoffset, CHRsize );
 				}
@@ -384,7 +384,7 @@ LONG	FileSize;
 			// Trainer
 			if( IsTRAINER() ) {
 				if( !(lpTrainer = (LPBYTE)malloc( 512 )) ) {
-					// メモリを確保出来ません
+					// 메모리 확보 불가
 					throw	CApp::GetErrorString( IDS_ERROR_OUTOFMEMORY );
 				}
 
@@ -396,7 +396,7 @@ LONG	FileSize;
 			// For dis....
 #ifdef	_DATATRACE
 			if( !(PROM_ACCESS = (LPBYTE)malloc( PRGsize )) ) {
-				// メモリを確保出来ません
+				// 메모리 확보 불가
 				throw	CApp::GetErrorString( IDS_ERROR_OUTOFMEMORY );
 			}
 			ZeroMemory( PROM_ACCESS, PRGsize );
