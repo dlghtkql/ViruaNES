@@ -1,5 +1,5 @@
 //
-// ƒlƒbƒgƒvƒŒƒCƒNƒ‰ƒX
+// NET PLAY CLASSSSSSSSSSSSSS
 //
 #ifndef	__CNETPLAY_INCLUDED__
 #define	__CNETPLAY_INCLUDED__
@@ -13,7 +13,7 @@
 
 #include <string>
 using namespace std;
-
+//WM_APP ì„¤ëª… http://www.soen.kr/lecture/win32api/reference/Message/WM_APP.htm
 #define	WM_NETPLAY		(WM_APP+100)
 
 #define	WM_NETPLAY_ACCEPT	(WM_APP+110)
@@ -27,46 +27,49 @@ public:
 	CNetPlay();
 	~CNetPlay();
 
-	// ‰Šú‰»/ŠJ•ú
+	// ì´ˆê¸°í™” / ì˜¤í”ˆ(ê°œë°©)
 	BOOL	Initialize( HWND hWnd );
 	void	Release();
 
-	// ƒlƒbƒgƒvƒŒƒC‰Â”\H
+	// NETPLAYê°€ ê°€ëŠ¥í•œì§€ í™•ì¸ 
 	BOOL	IsNetPlay() { return m_hWnd?TRUE:FALSE; }
-	// Ú‘±’†H
+	// ì—°ê²°ì¤‘ì¸ê°€ ? 
 	BOOL	IsConnect() { return m_hWnd?m_bConnect:FALSE; }
-	// Ú‘±’†H
+	// ì—°ê²°ì¤‘ì¸ê°€ ? 
 	BOOL	IsServer() { return m_bServer; }
 
-	// ’ÊMƒŒƒCƒeƒ“ƒV
+	// í†µì‹ ì§€ì—°ì‹œê°„ 
 	void	SetLatency( INT nLatency ) { m_nLatency = nLatency; }
 	INT	GetLatency() { return m_nLatency; }
 
-	// ”ñ“¯Šúˆ—ƒƒbƒZ[ƒW•Ô‘—ƒEƒCƒ“ƒhƒE‚Ìİ’è
+	// ë¹„ë™ê¸° ì²˜ë¦¬ ë©”ì‹œì§€ ë°˜ì†¡ì„í• ë•Œ ìœˆë„ìš°ì˜ ì„¤ì •
 	void	SetMsgWnd( HWND hWnd ) { m_hWndMsg = hWnd; }
 
-	// Ú‘±‚ÆØ’f
+	// ì—°ê²° ë° ë¶„ë¦¬
 	BOOL	Connect( BOOL bServer, const char* IP, unsigned short Port );
 	void	Disconnect();
 
-	// ƒf[ƒ^‘—M 0:óMƒf[ƒ^‘Ò‚¿ 1ˆÈã:óMƒf[ƒ^‚ ‚è 0–¢–:Ú‘±Ø‚ê‚âƒGƒ‰[
+	// ë°ì´í„° ì „ì†¡ 0 : ìˆ˜ì‹  ë°ì´í„° ëŒ€ê¸° 
+	//1 ì´ìƒ : ìˆ˜ì‹  ë°ì´í„°ê°€ ì¡´ì¬í•¨  
+	//0 ë¯¸ë§Œ : ì—°ê²° ì¡°ê°ì´ë‚˜ ì˜¤ë¥˜
 	INT	Send( unsigned char* pBuf, int size );
-	// ƒf[ƒ^óM
-	// 0:óMƒf[ƒ^‘Ò‚¿ 1ˆÈã:óMƒf[ƒ^‚ ‚è 0–¢–:Ú‘±Ø‚ê‚âƒGƒ‰[
-	// ƒ^ƒCƒ€ƒAƒEƒg–³‚µ
+	// ë°ì´í„° ìˆ˜ì‹ 
+	// 0 : ìˆ˜ì‹  ë°ì´í„° ëŒ€ê¸° 1ì´ìƒ : ìˆ˜ì‹  ë°ì´í„° ìˆëŠ” 0ë¯¸ë§Œ : ì ‘ì† ë¶€ì¡±ì´ë‚˜ ì˜¤ë¥˜
+	// íƒ€ì„ ì•„ì›ƒì´ ì—†ìŒ 
 	INT	Recv( unsigned char* pBuf, int size );
-	// ƒ^ƒCƒ€ƒAƒEƒg—L‚è
+	// íƒ€ì„ ì•„ì›ƒì´ ì¡´ì¬í•¨
 	INT	RecvTime( unsigned char* pBuf, int size, unsigned long timeout );
 
-	// WindowsƒƒbƒZ[ƒWƒvƒƒV[ƒWƒƒ
+	// Windows ë©”ì‹œì§€ ì ˆì°¨ 
+	//WndProc - ë©”ì‹œì§€ ì²˜ë¦¬ í•¨ìˆ˜ , WPARAM - ê°’ì„ ë„˜ê¹€ LPARAM - ê°’ ë§ê³ ë„ í¬ì¸í„°ë¡œë„ ë„˜ê¹€
 	HRESULT	WndProc( HWND hWnd, WPARAM wParam, LPARAM lParam );
 protected:
-	// ƒƒ“ƒo•Ï”
+	// ë©¤ë²„ ë³€ìˆ˜
 	HWND	m_hWnd;
 	HWND	m_hWndMsg;
 
 	BOOL	m_bServer;
-	BOOL	m_bConnect;	// Ú‘±’†H
+	BOOL	m_bConnect;	// ì—°ê²° ì²´í¬
 	INT	m_nLatency;
 
 	// WINSOCK
