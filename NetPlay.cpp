@@ -13,36 +13,35 @@ CNetPlay::CNetPlay()
 	m_hWnd = m_hWndMsg = NULL;
 	m_bConnect = FALSE;
 
-	m_SocketConnect = INVALID_SOCKET;
-	m_SocketData = INVALID_SOCKET;
+	m_SocketConnect = INVALID_SOCKET; //ìˆ˜ë¡œ í‘œí˜„ë˜ëŠ” ì†Œì¼“ì˜ í•¸ë“¤ ê°’ì„ ì§€ì •í•˜ê¸° ìœ„í•´ ì •ì˜ëœ ìë£Œí˜•ì˜ ì´ë¦„
+	m_SocketData = INVALID_SOCKET; //ì‹¤íŒ¨ì‹œ ë°˜í™˜í•œë‹¤ 
 }
 
 CNetPlay::~CNetPlay()
 {
-	// ‚Æ‚è‚ ‚¦‚¸
+	// ìš°ì„ ìˆœìœ„(?)
 	Release();
 }
 
 BOOL	CNetPlay::Initialize( HWND hWnd )
 {
-	// ‚Æ‚è‚ ‚¦‚¸
+	// ìš°ì„ ìˆœìœ„(?)
 	Release();
 
-	// WinSock DLL‚Ì‰Šú‰»
+	// WinSock DLLì´ˆê¸°í™”
 	if( ::WSAStartup( MAKEWORD(1,1), &m_WSAdata ) )
 		return	FALSE;
 
-	// ƒo[ƒWƒ‡ƒ“ˆá‚¤‚¶‚á`‚ñ
+	// ë²„ì „ì˜ ì°¨ì´ 
 	if( m_WSAdata.wVersion != MAKEWORD(1,1) ) {
-		::WSACleanup();
+		::WSACleanup(); //ì†Œì¼“ì´ ë¦¬ì…‹ë˜ê³  ë‹«í˜
 		return	FALSE;
 	}
 
 	m_hWnd = hWnd;
 	return	TRUE;
 }
-
-void	CNetPlay::Release()
+void	CNetPlay::Release() //ì´ˆê¸°í™”(?)
 {
 	Disconnect();
 
@@ -61,7 +60,7 @@ BOOL	CNetPlay::Connect( BOOL bServer, const char* IP, unsigned short Port )
 
 	if( bServer ) {
 	// Server
-		// Ú‘±’Ê’mƒ\ƒPƒbƒgì¬
+		// ì†Œì¼“ ìƒì„± ì—°ê²°ì•Œë¦¼
 		if( m_SocketConnect == INVALID_SOCKET ) {
 			m_SocketConnect = ::socket( AF_INET, SOCK_STREAM, IPPROTO_TCP );
 			if( m_SocketConnect == INVALID_SOCKET ) {
@@ -69,7 +68,7 @@ BOOL	CNetPlay::Connect( BOOL bServer, const char* IP, unsigned short Port )
 				return	FALSE;
 			}
 		}
-		// ƒ|[ƒg‚ÆŒ‹‚Ñ‚Â‚¯‚é
+		// ãƒãƒ¼ãƒˆã¨çµã³ã¤ã‘ã‚‹
 		struct sockaddr_in addr;
 		::ZeroMemory( &addr, sizeof(addr) );
 		addr.sin_family      = AF_INET;
@@ -80,13 +79,13 @@ BOOL	CNetPlay::Connect( BOOL bServer, const char* IP, unsigned short Port )
 			CLOSESOCKET( m_SocketConnect );
 			return	FALSE;
 		}
-		// Ú‘±—v‹ƒCƒxƒ“ƒg‚Ìİ’è
+		// æ¥ç¶šè¦æ±‚ã‚¤ãƒ™ãƒ³ãƒˆã®è¨­å®š
 		if( ::WSAAsyncSelect( m_SocketConnect, m_hWnd, WM_NETPLAY, FD_ACCEPT ) == SOCKET_ERROR ) {
 			DEBUGOUT( "CNetPlay:WSAAsyncSelect failed.\n" );
 			CLOSESOCKET( m_SocketConnect );
 			return	FALSE;
 		}
-		// Ú‘±—v‹ó•tŠJn
+		// æ¥ç¶šè¦æ±‚å—ä»˜é–‹å§‹
 		if( ::listen( m_SocketConnect, 1 ) == SOCKET_ERROR ) {
 			DEBUGOUT( "CNetPlay:listen failed.\n" );
 			CLOSESOCKET( m_SocketConnect );
@@ -94,40 +93,40 @@ BOOL	CNetPlay::Connect( BOOL bServer, const char* IP, unsigned short Port )
 		}
 	} else {
 	// Client
-		// IPƒAƒhƒŒƒXH
+		// IPã‚¢ãƒ‰ãƒ¬ã‚¹ï¼Ÿ
 		unsigned long IP_address = ::inet_addr( IP );
 		if( IP_address == INADDR_NONE ) {
-			DEBUGOUT( "CNetPlay:IPƒAƒhƒŒƒX‚ª•s³‚Å‚·B\"%s\"\n", IP );
+			DEBUGOUT( "CNetPlay:IPã‚¢ãƒ‰ãƒ¬ã‚¹ãŒä¸æ­£ã§ã™ã€‚\"%s\"\n", IP );
 			return	FALSE;
 		}
 
-		// ƒf[ƒ^’ÊMƒ\ƒPƒbƒgì¬
+		// ãƒ‡ãƒ¼ã‚¿é€šä¿¡ã‚½ã‚±ãƒƒãƒˆä½œæˆ
 		m_SocketData = ::socket( AF_INET, SOCK_STREAM, IPPROTO_TCP );
 		if( m_SocketData == INVALID_SOCKET ) {
 			DEBUGOUT( "CNetPlay:socket failed.\n" );
 			return	FALSE;
 		}
-		// NagleƒAƒ‹ƒSƒŠƒYƒ€‚Ì–³Œø‰»
+		// Nagleã‚¢ãƒ«ã‚´ãƒªã‚ºãƒ ã®ç„¡åŠ¹åŒ–
 		BOOL	bOpt = TRUE;
 		if( ::setsockopt( m_SocketData, IPPROTO_TCP, TCP_NODELAY, (const char*)&bOpt, sizeof(bOpt) ) == SOCKET_ERROR ) {
 			DEBUGOUT( "CNetPlay:setsockopt failed.\n" );
 			CLOSESOCKET( m_SocketData );
 			return	FALSE;
 		}
-		// ƒuƒƒbƒLƒ“ƒOƒ‚[ƒhİ’è
+		// ãƒ–ãƒ­ãƒƒã‚­ãƒ³ã‚°ãƒ¢ãƒ¼ãƒ‰è¨­å®š
 		BOOL	bArg = TRUE;
 		if( ::ioctlsocket( m_SocketData, FIONBIO, (unsigned long*)&bArg ) == SOCKET_ERROR ) {
 			DEBUGOUT( "CNetPlay:ioctlsocket failed.\n" );
 			CLOSESOCKET( m_SocketData );
 			return	FALSE;
 		}
-		// Ú‘±Š®—¹ƒCƒxƒ“ƒg‚Ìİ’è
+		// æ¥ç¶šå®Œäº†ã‚¤ãƒ™ãƒ³ãƒˆã®è¨­å®š
 		if( ::WSAAsyncSelect( m_SocketData, m_hWnd, WM_NETPLAY, FD_CONNECT ) == SOCKET_ERROR ) {
 			DEBUGOUT( "CNetPlay:WSAAsyncSelect failed.\n" );
 			CLOSESOCKET( m_SocketData );
 			return	FALSE;
 		}
-		// Ú‘±‚ğ—v‹‚·‚é
+		// æ¥ç¶šã‚’è¦æ±‚ã™ã‚‹
 		struct sockaddr_in addr;
 		::ZeroMemory( &addr, sizeof(addr) );
 		addr.sin_family      = AF_INET;
@@ -147,13 +146,13 @@ BOOL	CNetPlay::Connect( BOOL bServer, const char* IP, unsigned short Port )
 
 void	CNetPlay::Disconnect()
 {
-	// ƒ\ƒPƒbƒg‚ğƒVƒƒƒbƒgƒ_ƒEƒ“‚µ‚Ä”jŠü
+	// ã‚½ã‚±ãƒƒãƒˆã‚’ã‚·ãƒ£ãƒƒãƒˆãƒ€ã‚¦ãƒ³ã—ã¦ç ´æ£„
 	if( m_SocketConnect != INVALID_SOCKET ) {
-//		::shutdown( m_SocketConnect, SD_BOTH );	// WS2ˆÈ~‚ç‚µ‚¢c
+//		::shutdown( m_SocketConnect, SD_BOTH );	// WS2ä»¥é™ã‚‰ã—ã„â€¦
 		CLOSESOCKET( m_SocketConnect );
 	}
 	if( m_SocketData != INVALID_SOCKET ) {
-//		::shutdown( m_SocketData, SD_BOTH );	// WS2ˆÈ~‚ç‚µ‚¢c
+//		::shutdown( m_SocketData, SD_BOTH );	// WS2ä»¥é™ã‚‰ã—ã„â€¦
 		CLOSESOCKET( m_SocketData );
 	}
 
@@ -205,9 +204,9 @@ INT	CNetPlay::RecvTime( unsigned char* pBuf, int size, unsigned long timeout )
 	unsigned long dwTimeOut;
 	dwTimeOut = ::timeGetTime();
 	while( (ret = NetPlay.Recv( pBuf, size )) == 0 ) {
-		// ŒÅ‚Ü‚ç‚È‚¢‘[’u
+		// å›ºã¾ã‚‰ãªã„æªç½®
 		::Sleep( 0 );
-		// ƒ^ƒCƒ€ƒAƒEƒg‚Ìƒ`ƒFƒbƒN
+		// ã‚¿ã‚¤ãƒ ã‚¢ã‚¦ãƒˆã®ãƒã‚§ãƒƒã‚¯
 		if( (::timeGetTime()-dwTimeOut) > timeout ) {
 			return	-1;
 		}
@@ -217,195 +216,195 @@ INT	CNetPlay::RecvTime( unsigned char* pBuf, int size, unsigned long timeout )
 
 HRESULT	CNetPlay::WndProc( HWND hWnd, WPARAM wParam, LPARAM lParam )
 {
-	// ƒGƒ‰[H
+	// ã‚¨ãƒ©ãƒ¼ï¼Ÿ
 	if( WSAGETSELECTERROR(lParam) ) {
 #if	0
 		switch( WSAGETSELECTERROR(lParam) ) {
 			case	WSAEINTR:
-				MessageBox( hWnd, "ŠÖ”ŒÄ‚Ño‚µ‚ª’†’f‚³‚ê‚½B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "é–¢æ•°å‘¼ã³å‡ºã—ãŒä¸­æ–­ã•ã‚ŒãŸã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAEBADF:
-				MessageBox( hWnd, "–³Œø‚Èƒtƒ@ƒCƒ‹ƒnƒ“ƒhƒ‹B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ç„¡åŠ¹ãªãƒ•ã‚¡ã‚¤ãƒ«ãƒãƒ³ãƒ‰ãƒ«ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAEACCES:
-				MessageBox( hWnd, "ƒAƒNƒZƒX‚ª‹‘”Û‚³‚ê‚½B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ã‚¢ã‚¯ã‚»ã‚¹ãŒæ‹’å¦ã•ã‚ŒãŸã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAEFAULT:
-				MessageBox( hWnd, "–³Œø‚Èƒoƒbƒtƒ@ƒAƒhƒŒƒX‚Å‚·B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ç„¡åŠ¹ãªãƒãƒƒãƒ•ã‚¡ã‚¢ãƒ‰ãƒ¬ã‚¹ã§ã™ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAEINVAL:
-				MessageBox( hWnd, "–³Œø‚Èˆø”‚ª“n‚³‚ê‚½B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ç„¡åŠ¹ãªå¼•æ•°ãŒæ¸¡ã•ã‚ŒãŸã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAEMFILE:
-				MessageBox( hWnd, "g—p’†‚Ìƒ\ƒPƒbƒg‚Ì”‚ª‘½‚·‚¬‚éB\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ä½¿ç”¨ä¸­ã®ã‚½ã‚±ãƒƒãƒˆã®æ•°ãŒå¤šã™ãã‚‹ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAEWOULDBLOCK:
-				MessageBox( hWnd, "‘€ì‚ÍƒuƒƒbƒLƒ“ƒO‚³‚ê‚éB\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "æ“ä½œã¯ãƒ–ãƒ­ãƒƒã‚­ãƒ³ã‚°ã•ã‚Œã‚‹ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAEINPROGRESS:
-				MessageBox( hWnd, "Šù‚ÉƒuƒƒbƒLƒ“ƒOè‘±‚«‚ªÀs‚³‚ê‚Ä‚¢‚éB\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "æ—¢ã«ãƒ–ãƒ­ãƒƒã‚­ãƒ³ã‚°æ‰‹ç¶šããŒå®Ÿè¡Œã•ã‚Œã¦ã„ã‚‹ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAEALREADY:
-				MessageBox( hWnd, "—v‹‚³‚ê‚½‘€ì‚ÍŠù‚ÉÀs’†A‚Ü‚½‚ÍÀsÏ‚İB\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "è¦æ±‚ã•ã‚ŒãŸæ“ä½œã¯æ—¢ã«å®Ÿè¡Œä¸­ã€ã¾ãŸã¯å®Ÿè¡Œæ¸ˆã¿ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAENOTSOCK:
-				MessageBox( hWnd, "w’è‚³‚ê‚½ƒ\ƒPƒbƒg‚ª–³Œø‚Å‚ ‚éB\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "æŒ‡å®šã•ã‚ŒãŸã‚½ã‚±ãƒƒãƒˆãŒç„¡åŠ¹ã§ã‚ã‚‹ã€‚\n", "ERROR", MB_OK );
 				break;
 //			case	WSAEDESTADDREQ:
-//				MessageBox( hWnd, "‘€ì‚ÌÀs‚É‘—MæƒAƒhƒŒƒX‚ª•K—vB\n", "ERROR", MB_OK );
+//				MessageBox( hWnd, "æ“ä½œã®å®Ÿè¡Œã«é€ä¿¡å…ˆã‚¢ãƒ‰ãƒ¬ã‚¹ãŒå¿…è¦ã€‚\n", "ERROR", MB_OK );
 //				break;
 			case	WSAEMSGSIZE:
-				MessageBox( hWnd, "ƒƒbƒZ[ƒWƒTƒCƒY‚ª‘å‚«‚·‚¬‚éB\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚µã‚¤ã‚ºãŒå¤§ãã™ãã‚‹ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAEPROTOTYPE:
-				MessageBox( hWnd, "ƒ\ƒPƒbƒg‚Í—v‹‚³‚ê‚½ƒvƒƒgƒRƒ‹‚É“K‡‚µ‚Ä‚¢‚È‚¢B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ã‚½ã‚±ãƒƒãƒˆã¯è¦æ±‚ã•ã‚ŒãŸãƒ—ãƒ­ãƒˆã‚³ãƒ«ã«é©åˆã—ã¦ã„ãªã„ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAENOPROTOOPT:
-				MessageBox( hWnd, "•s³‚ÈƒvƒƒgƒRƒ‹ƒIƒvƒVƒ‡ƒ“B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ä¸æ­£ãªãƒ—ãƒ­ãƒˆã‚³ãƒ«ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAEPROTONOSUPPORT:
-				MessageBox( hWnd, "ƒvƒƒgƒRƒ‹‚ªƒTƒ|[ƒg‚³‚ê‚Ä‚¢‚È‚¢B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ãƒ—ãƒ­ãƒˆã‚³ãƒ«ãŒã‚µãƒãƒ¼ãƒˆã•ã‚Œã¦ã„ãªã„ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAESOCKTNOSUPPORT:
-				MessageBox( hWnd, "w’è‚³‚ê‚½ƒ\ƒPƒbƒgƒ^ƒCƒv‚ÍƒTƒ|[ƒg‚³‚ê‚Ä‚¢‚È‚¢B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "æŒ‡å®šã•ã‚ŒãŸã‚½ã‚±ãƒƒãƒˆã‚¿ã‚¤ãƒ—ã¯ã‚µãƒãƒ¼ãƒˆã•ã‚Œã¦ã„ãªã„ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAEOPNOTSUPP:
-				MessageBox( hWnd, "—v‹‚³‚ê‚½‘€ì‚ÍƒTƒ|[ƒg‚³‚ê‚Ä‚¢‚È‚¢B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "è¦æ±‚ã•ã‚ŒãŸæ“ä½œã¯ã‚µãƒãƒ¼ãƒˆã•ã‚Œã¦ã„ãªã„ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAEPFNOSUPPORT:
-				MessageBox( hWnd, "ƒvƒƒgƒRƒ‹ƒtƒ@ƒ~ƒŠ‚ªƒTƒ|[ƒg‚³‚ê‚Ä‚¢‚È‚¢B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ãƒ—ãƒ­ãƒˆã‚³ãƒ«ãƒ•ã‚¡ãƒŸãƒªãŒã‚µãƒãƒ¼ãƒˆã•ã‚Œã¦ã„ãªã„ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAEAFNOSUPPORT:
-				MessageBox( hWnd, "ƒAƒhƒŒƒXƒtƒ@ƒ~ƒŠ‚ªƒTƒ|[ƒg‚³‚ê‚Ä‚¢‚È‚¢B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ã‚¢ãƒ‰ãƒ¬ã‚¹ãƒ•ã‚¡ãƒŸãƒªãŒã‚µãƒãƒ¼ãƒˆã•ã‚Œã¦ã„ãªã„ã€‚\n", "ERROR", MB_OK );
 				break;
 
 			case	WSAEADDRINUSE:
-				MessageBox( hWnd, "ƒAƒhƒŒƒX‚ÍŠù‚Ég—p’†‚Å‚ ‚éB\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ã‚¢ãƒ‰ãƒ¬ã‚¹ã¯æ—¢ã«ä½¿ç”¨ä¸­ã§ã‚ã‚‹ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAEADDRNOTAVAIL:
-				MessageBox( hWnd, "–³Œø‚Èƒlƒbƒgƒ[ƒNƒAƒhƒŒƒXB\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ç„¡åŠ¹ãªãƒãƒƒãƒˆãƒ¯ãƒ¼ã‚¯ã‚¢ãƒ‰ãƒ¬ã‚¹ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAENETDOWN:
-				MessageBox( hWnd, "ƒlƒbƒgƒ[ƒN‚ªƒ_ƒEƒ“‚µ‚Ä‚¢‚éB\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ãƒãƒƒãƒˆãƒ¯ãƒ¼ã‚¯ãŒãƒ€ã‚¦ãƒ³ã—ã¦ã„ã‚‹ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAENETUNREACH:
-				MessageBox( hWnd, "w’è‚³‚ê‚½ƒlƒbƒgƒ[ƒNƒzƒXƒg‚É“’B‚Å‚«‚È‚¢B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "æŒ‡å®šã•ã‚ŒãŸãƒãƒƒãƒˆãƒ¯ãƒ¼ã‚¯ãƒ›ã‚¹ãƒˆã«åˆ°é”ã§ããªã„ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAENETRESET:
-				MessageBox( hWnd, "ƒlƒbƒgƒ[ƒNÚ‘±‚ª”jŠü‚³‚ê‚½B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ãƒãƒƒãƒˆãƒ¯ãƒ¼ã‚¯æ¥ç¶šãŒç ´æ£„ã•ã‚ŒãŸã€‚\n", "ERROR", MB_OK );
 				break;
 
 			case	WSAECONNRESET:
-				MessageBox( hWnd, "ƒlƒbƒgƒ[ƒNÚ‘±‚ª‘Šè‚É‚æ‚Á‚Ä”jŠü‚³‚ê‚½B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ãƒãƒƒãƒˆãƒ¯ãƒ¼ã‚¯æ¥ç¶šãŒç›¸æ‰‹ã«ã‚ˆã£ã¦ç ´æ£„ã•ã‚ŒãŸã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAENOBUFS:
-				MessageBox( hWnd, "ƒoƒbƒtƒ@‚ª•s‘«‚µ‚Ä‚¢‚éB\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ãƒãƒƒãƒ•ã‚¡ãŒä¸è¶³ã—ã¦ã„ã‚‹ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAEISCONN:
-				MessageBox( hWnd, "ƒ\ƒPƒbƒg‚ÍŠù‚ÉÚ‘±‚³‚ê‚Ä‚¢‚éB\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ã‚½ã‚±ãƒƒãƒˆã¯æ—¢ã«æ¥ç¶šã•ã‚Œã¦ã„ã‚‹ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAENOTCONN:
-				MessageBox( hWnd, "ƒ\ƒPƒbƒg‚ÍÚ‘±‚³‚ê‚Ä‚¢‚È‚¢B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ã‚½ã‚±ãƒƒãƒˆã¯æ¥ç¶šã•ã‚Œã¦ã„ãªã„ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAESHUTDOWN:
-				MessageBox( hWnd, "ƒ\ƒPƒbƒg‚ÍƒVƒƒƒbƒgƒ_ƒEƒ“‚³‚ê‚Ä‚¢‚éB\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ã‚½ã‚±ãƒƒãƒˆã¯ã‚·ãƒ£ãƒƒãƒˆãƒ€ã‚¦ãƒ³ã•ã‚Œã¦ã„ã‚‹ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAETOOMANYREFS:
-				MessageBox( hWnd, "QÆ‚Ì”‚ª‘½‚·‚¬‚éB\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "å‚ç…§ã®æ•°ãŒå¤šã™ãã‚‹ã€‚\n", "ERROR", MB_OK );
 				break;
 
 			case	WSAETIMEDOUT:
-				MessageBox( hWnd, "Ú‘±—v‹‚ªƒ^ƒCƒ€ƒAƒEƒg‚µ‚½B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "æ¥ç¶šè¦æ±‚ãŒã‚¿ã‚¤ãƒ ã‚¢ã‚¦ãƒˆã—ãŸã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAECONNREFUSED:
-				MessageBox( hWnd, "Ú‘±‚ª‹‘”Û‚³‚ê‚½B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "æ¥ç¶šãŒæ‹’å¦ã•ã‚ŒãŸã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAELOOP:
-				MessageBox( hWnd, "ƒ‹[ƒvB\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ãƒ«ãƒ¼ãƒ—ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAENAMETOOLONG:
-				MessageBox( hWnd, "–¼‘O‚ª’·‚·‚¬‚éB\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "åå‰ãŒé•·ã™ãã‚‹ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAEHOSTDOWN:
-				MessageBox( hWnd, "ƒzƒXƒg‚ªƒ_ƒEƒ“‚µ‚Ä‚¢‚éB\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ãƒ›ã‚¹ãƒˆãŒãƒ€ã‚¦ãƒ³ã—ã¦ã„ã‚‹ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAEHOSTUNREACH:
-				MessageBox( hWnd, "ƒzƒXƒg‚Ö‚ÌŒo˜H‚ª‚È‚¢B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ãƒ›ã‚¹ãƒˆã¸ã®çµŒè·¯ãŒãªã„ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAENOTEMPTY:
-				MessageBox( hWnd, "ƒfƒBƒŒƒNƒgƒŠ‚ª‹ó‚Å‚Í‚È‚¢B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªãŒç©ºã§ã¯ãªã„ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAEPROCLIM:
-				MessageBox( hWnd, "ƒ†[ƒU[‚Ì”‚ª‘½‚·‚¬‚éB\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ãƒ¦ãƒ¼ã‚¶ãƒ¼ã®æ•°ãŒå¤šã™ãã‚‹ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAEDQUOT:
-				MessageBox( hWnd, "ƒfƒBƒXƒNƒNƒH[ƒ^B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ãƒ‡ã‚£ã‚¹ã‚¯ã‚¯ã‚©ãƒ¼ã‚¿ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAESTALE:
-				MessageBox( hWnd, "Às‚µ‚æ‚¤‚Æ‚µ‚½‘€ì‚Í”p~‚³‚ê‚Ä‚¢‚éB\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "å®Ÿè¡Œã—ã‚ˆã†ã¨ã—ãŸæ“ä½œã¯å»ƒæ­¢ã•ã‚Œã¦ã„ã‚‹ã€‚\n", "ERROR", MB_OK );
 				break;
 
 
 			case	WSAEREMOTE:
-				MessageBox( hWnd, "ƒŠƒ‚[ƒgB\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ãƒªãƒ¢ãƒ¼ãƒˆã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSASYSNOTREADY:
-				MessageBox( hWnd, "ƒlƒbƒgƒ[ƒNƒTƒuƒVƒXƒeƒ€‚ª—˜—p‚Å‚«‚È‚¢B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ãƒãƒƒãƒˆãƒ¯ãƒ¼ã‚¯ã‚µãƒ–ã‚·ã‚¹ãƒ†ãƒ ãŒåˆ©ç”¨ã§ããªã„ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAVERNOTSUPPORTED:
-				MessageBox( hWnd, "Winsock.dll‚Ìƒo[ƒWƒ‡ƒ“‚ª”ÍˆÍŠO‚Å‚ ‚éB\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "Winsock.dllã®ãƒãƒ¼ã‚¸ãƒ§ãƒ³ãŒç¯„å›²å¤–ã§ã‚ã‚‹ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSANOTINITIALISED:
-				MessageBox( hWnd, "WinSockƒVƒXƒeƒ€‚ª‰Šú‰»‚³‚ê‚Ä‚¢‚È‚¢B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "WinSockã‚·ã‚¹ãƒ†ãƒ ãŒåˆæœŸåŒ–ã•ã‚Œã¦ã„ãªã„ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAEDISCON:
-				MessageBox( hWnd, "ƒVƒƒƒbƒgƒ_ƒEƒ“ˆ—’†B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ã‚·ãƒ£ãƒƒãƒˆãƒ€ã‚¦ãƒ³å‡¦ç†ä¸­ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAENOMORE:
-				MessageBox( hWnd, "ƒf[ƒ^‚Í‚±‚êˆÈã‘¶İ‚µ‚È‚¢B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ãƒ‡ãƒ¼ã‚¿ã¯ã“ã‚Œä»¥ä¸Šå­˜åœ¨ã—ãªã„ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAECANCELLED:
-				MessageBox( hWnd, "‘€ì‚Íæ‚èÁ‚³‚ê‚½B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "æ“ä½œã¯å–ã‚Šæ¶ˆã•ã‚ŒãŸã€‚\n", "ERROR", MB_OK );
 				break;
 
 			case	WSAEINVALIDPROCTABLE:
-				MessageBox( hWnd, "ƒT[ƒrƒXƒvƒƒoƒCƒ_‚ÌŠÖ”ƒe[ƒuƒ‹‚ª–³ŒøB\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ã‚µãƒ¼ãƒ“ã‚¹ãƒ—ãƒ­ãƒã‚¤ãƒ€ã®é–¢æ•°ãƒ†ãƒ¼ãƒ–ãƒ«ãŒç„¡åŠ¹ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAEINVALIDPROVIDER:
-				MessageBox( hWnd, "ƒT[ƒrƒXƒvƒƒoƒCƒ_‚ª–³ŒøB\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ã‚µãƒ¼ãƒ“ã‚¹ãƒ—ãƒ­ãƒã‚¤ãƒ€ãŒç„¡åŠ¹ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAEPROVIDERFAILEDINIT:
-				MessageBox( hWnd, "ƒT[ƒrƒXƒvƒƒoƒCƒ_‚Ì‰Šú‰»‚É¸”s‚µ‚½B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ã‚µãƒ¼ãƒ“ã‚¹ãƒ—ãƒ­ãƒã‚¤ãƒ€ã®åˆæœŸåŒ–ã«å¤±æ•—ã—ãŸã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSASYSCALLFAILURE:
-				MessageBox( hWnd, "ƒVƒXƒeƒ€ƒR[ƒ‹‚É¸”s‚µ‚½B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ã‚·ã‚¹ãƒ†ãƒ ã‚³ãƒ¼ãƒ«ã«å¤±æ•—ã—ãŸã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSASERVICE_NOT_FOUND:
-				MessageBox( hWnd, "ƒT[ƒrƒX‚ªŒ©‚Â‚©‚ç‚È‚¢B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ã‚µãƒ¼ãƒ“ã‚¹ãŒè¦‹ã¤ã‹ã‚‰ãªã„ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSATYPE_NOT_FOUND:
-				MessageBox( hWnd, "ƒ^ƒCƒv‚ªŒ©‚Â‚©‚ç‚È‚¢B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ã‚¿ã‚¤ãƒ—ãŒè¦‹ã¤ã‹ã‚‰ãªã„ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSA_E_NO_MORE:
-				MessageBox( hWnd, "ƒf[ƒ^‚Í‚±‚êˆÈã‘¶İ‚µ‚È‚¢B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ãƒ‡ãƒ¼ã‚¿ã¯ã“ã‚Œä»¥ä¸Šå­˜åœ¨ã—ãªã„ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSA_E_CANCELLED:
-				MessageBox( hWnd, "ŒŸõ‚ªƒLƒƒƒ“ƒZƒ‹‚³‚ê‚½B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "æ¤œç´¢ãŒã‚­ãƒ£ãƒ³ã‚»ãƒ«ã•ã‚ŒãŸã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAEREFUSED:
-				MessageBox( hWnd, "‘€ì‚Í‹‘”Û‚³‚ê‚½B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "æ“ä½œã¯æ‹’å¦ã•ã‚ŒãŸã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSAHOST_NOT_FOUND:
-				MessageBox( hWnd, "ƒzƒXƒg‚ªŒ©‚Â‚©‚ç‚È‚¢B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "ãƒ›ã‚¹ãƒˆãŒè¦‹ã¤ã‹ã‚‰ãªã„ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSATRY_AGAIN:
-				MessageBox( hWnd, "w’è‚³‚ê‚½ƒzƒXƒg‚ªŒ©‚Â‚©‚ç‚È‚¢A‚Ü‚½‚ÍƒT[ƒrƒX‚ÌˆÙíB\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "æŒ‡å®šã•ã‚ŒãŸãƒ›ã‚¹ãƒˆãŒè¦‹ã¤ã‹ã‚‰ãªã„ã€ã¾ãŸã¯ã‚µãƒ¼ãƒ“ã‚¹ã®ç•°å¸¸ã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSANO_RECOVERY:
-				MessageBox( hWnd, "‰ñ•œ•s”\‚ÈƒGƒ‰[‚ª”­¶‚µ‚½B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "å›å¾©ä¸èƒ½ãªã‚¨ãƒ©ãƒ¼ãŒç™ºç”Ÿã—ãŸã€‚\n", "ERROR", MB_OK );
 				break;
 			case	WSANO_DATA:
-				MessageBox( hWnd, "—v‹‚³‚ê‚½ƒ^ƒCƒv‚Ìƒf[ƒ^ƒŒƒR[ƒh‚ªŒ©‚Â‚©‚ç‚È‚¢B\n", "ERROR", MB_OK );
+				MessageBox( hWnd, "è¦æ±‚ã•ã‚ŒãŸã‚¿ã‚¤ãƒ—ã®ãƒ‡ãƒ¼ã‚¿ãƒ¬ã‚³ãƒ¼ãƒ‰ãŒè¦‹ã¤ã‹ã‚‰ãªã„ã€‚\n", "ERROR", MB_OK );
 				break;
 
 		}
@@ -437,7 +436,7 @@ HRESULT	CNetPlay::WndProc( HWND hWnd, WPARAM wParam, LPARAM lParam )
 			}
 			DEBUGOUT( "done.\n" );
 
-			// NagleƒAƒ‹ƒSƒŠƒYƒ€‚Ì–³Œø‰»
+			// Nagleã‚¢ãƒ«ã‚´ãƒªã‚ºãƒ ã®ç„¡åŠ¹åŒ–
 			bOpt = TRUE;
 			if( ::setsockopt( m_SocketData, IPPROTO_TCP, TCP_NODELAY, (const char*)&bOpt, sizeof(bOpt) ) == SOCKET_ERROR ) {
 				DEBUGOUT( "CNetPlay:setsockopt failed.\n" );
@@ -447,7 +446,7 @@ HRESULT	CNetPlay::WndProc( HWND hWnd, WPARAM wParam, LPARAM lParam )
 				}
 				return	0L;
 			}
-			// ƒuƒƒbƒLƒ“ƒOƒ‚[ƒhİ’è
+			// ãƒ–ãƒ­ãƒƒã‚­ãƒ³ã‚°ãƒ¢ãƒ¼ãƒ‰è¨­å®š
 			bArg = TRUE;
 			if( ::ioctlsocket( m_SocketData, FIONBIO, (unsigned long*)&bArg ) == SOCKET_ERROR ) {
 				DEBUGOUT( "CNetPlay:ioctlsocket failed.\n" );
